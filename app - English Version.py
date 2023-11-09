@@ -1,25 +1,23 @@
-# BIBLIOTECAS
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 from PIL import Image
 import requests
-
-# CRIAÇÃO DE CONTAINER E COLUNAS STREAMLIT
 container = st.container()
 col1,col2 = st.columns(2)
 
-# ESTE CÓDIGO ARMAZENA AS INFORMAÇÕES EM CACHE
+
+
 @st.cache_resource
 def load_data(file):
     """
-    Carregará o arquivo para análise sendo ele em CSV ou XLS/XLSX
+    Load data from a file (CSV or Excel).
 
-    parametros:
-        file (File): O arquivo a ser carregado.
+    Parameters:
+        file (File): The file to load.
 
-    Retorna:
-        DataFrame: Com os dados carregados.
+    Returns:
+        DataFrame: The loaded data.
     """
     file_extension = file.name.split(".")[-1]
     if file_extension == "csv":
@@ -27,63 +25,63 @@ def load_data(file):
     elif file_extension in ["xls", "xlsx"]:
         data = pd.read_excel(file)
     else:
-        st.warning("Formato do arquivo incompatível. Faça upload de um arquivo Excel ou CSV.")
+        st.warning("Unsupported file format. Please upload a CSV or Excel file.")
         return None
     return data
 
 
 def select_columns(df):
-    st.write("### Seleção de Colunas")
+    st.write("### Select Columns")
     all_columns = df.columns.tolist()
     #options_key = "_".join(all_columns)
-    selected_columns = st.multiselect("Selecionar", options=all_columns)
+    selected_columns = st.multiselect("Select columns", options=all_columns)
     
     if selected_columns:
         sub_df = df[selected_columns]
-        st.write("### DATAFRAME")
+        st.write("### Sub DataFrame")
         st.write(sub_df.head())
     else:
-        st.warning("Por favor selecione pelo menos uma coluna.")
+        st.warning("Please select at least one column.")
 
 def select_and_rename_column(df):
-    st.write("### SELECIONAR E RENOMEAR COLUNAS: ")
+    st.write("### Select and Rename Columns")
     
-    # SELECIONANDO AS COLUNAS A SEREM RENOMEADAS
+    # Select columns to rename
     all_columns = df.columns.tolist()
-    selected_columns = st.multiselect("Selecione as colunas para renomear: ", options=all_columns)
+    selected_columns = st.multiselect("Select columns to rename", options=all_columns)
     
-    # RENOMEANDO AS COLUNAS SELECIONADAS
+    # Rename the selected columns
     for column in selected_columns:
-        new_column_name = st.text_input(f"Entre um novo nome para coluna: '{column}'", value=column)
+        new_column_name = st.text_input(f"Enter new name for column '{column}'", value=column)
         if column != new_column_name:
             df.rename(columns={column: new_column_name}, inplace=True)
-            st.write(f"Coluna '{column}' renomeada como '{new_column_name}' realizado com êxito")
+            st.write(f"Column '{column}' renamed as '{new_column_name}' successfully!")
     
     return df    
 
 
 def show_missing_values_percentage(df):
-    st.write("### PERCENTUAL DE VALOR FALTANTE: ")
+    st.write("### Missing Values Percentage")
     
-    # CALCULANDO OS VALORES FALTANTES DE CADA COLUNA
+    # Calculate the percentage of missing values for each column
     missing_percentage = df.isnull().sum() / len(df) * 100
     
-    # CRIANDO UM DATAFRAM PARA ARMAZENAR OS VALORES PERCENTUAIS FALTANTES
-    missing_df = pd.DataFrame({'Coluna ': missing_percentage.index, 'Percentual Faltante ': missing_percentage.values})
+    # Create a DataFrame to store the missing values percentage
+    missing_df = pd.DataFrame({'Column': missing_percentage.index, 'Missing Percentage': missing_percentage.values})
     
-    # EXIBINDO VALORES PERCENTUAIS FALTANTES DO DATAFRAME
-    st.write("Valores Percentuais Faltantes -> ",missing_df)
+    # Display the missing values percentage DataFrame
+    st.write("Percentage of missing values",missing_df)
 
 
-# FUNÇÃO DE AGREGAÇÃO
+#aggregation funtion
 def agg(df):
-    # AAUTORIZANDOO USUÁRIO A SELECIONAR COLUNAS PARA AGREGAÇÃO
-    aggregation_columns = st.multiselect("SELECIONE COLUNAS PARA AGREGAÇÃO", options=df.columns)
+    # Allow the user to select columns for aggregation
+    aggregation_columns = st.multiselect("Select columns for aggregation", options=df.columns)
     
-    # AUTORIZANDO O USUÁRIO A SELECIONAR UMA FUNÇÃO DE AGREGAÇÃO
-    aggregation_function = st.selectbox("SELECIONE UMA FUNÇÃO DE AGREGAÇÃO:", options=["Sum", "Mean", "Median"])
+    # Allow the user to select an aggregation function
+    aggregation_function = st.selectbox("Select an aggregation function", options=["Sum", "Mean", "Median"])
     
-    # AGREGANDO
+    # Perform the aggregation
     if aggregation_columns:
         if aggregation_function == "Sum":
             aggregated_values = sub_df[aggregation_columns].sum()
@@ -92,60 +90,60 @@ def agg(df):
         elif aggregation_function == "Median":
             aggregated_values = sub_df[aggregation_columns].median()
         
-        # EXIBINDO VALOR AGREGADOS
-        st.write(f"Agregados {aggregation_function} para {aggregation_columns}")
+        # Display the aggregated values
+        st.write(f"Aggregated {aggregation_function} for {aggregation_columns}")
         st.write(aggregated_values)    
 
-#REMOVENDO DUPLICATAS
+#remove duplicats
 def remove_duplicates(df):
-    st.write("### REMOVER DUPLICATAS")
+    st.write("### Remove Duplicates")
     
-    # SELECINANDO COLUNAS PARA IDÊNTIFICAR DUPLICATAS
-    columns = st.multiselect("SELECIONE AS COLUNAS PARA IDÊNTIFICAR AS DUPLICATAS", options=df.columns)
+    # Select columns for identifying duplicates
+    columns = st.multiselect("Select columns for identifying duplicates", options=df.columns)
     
     if columns:
-        # REMOVENDO DUPLICATAS DA BASE DE DADOS SELECIONADAS
+        # Remove duplicates based on selected columns
         df.drop_duplicates(subset=columns, inplace=True)
         
-        st.write("Duplicatas removidas com sucesso!")
+        st.write("Duplicates removed successfully!")
         
     return df
-# BUSCAR E ALTERAR O VALOR EM UMA COLUNA
+#search and replace a value in column
 def search_and_replace(df):
-    st.write("### PESQUISA E ALTERAÇÃO")
+    st.write("### Search and Replace")
     
-    # SELECIONE UMA COLUNA PARA BUSCAR E ALTERAR
-    column = st.selectbox("SELECIONE UMA COLUNA:", options=df.columns)
+    # Select a column to search and replace
+    column = st.selectbox("Select a column", options=df.columns)
     
     if column:
-        # RECEBENDO O VALOR DE BUSCA DO USUÁRIO
-        search_string = st.text_input("Insira o texto a ser trocado")
+        # Get the search string from the user
+        search_string = st.text_input("Enter the search string")
         
-        # RECEBENDO O VALOR DE ALTERAÇÃO DO USUÁRIO
-        replace_value = st.text_input("Insira o valor de alteração")
+        # Get the replace value from the user
+        replace_value = st.text_input("Enter the replace value")
         
-        # REALIZANDO A OPERAÇÃO DE BUSCA E ALTERAÇÃO
+        # Perform the search and replace operation
         if search_string in df[column].values:
             df[column] = df[column].replace(search_string, replace_value)
-            st.write("Procura e Troca realizada com sucesso!")
+            st.write("Search and replace completed!")
             st.write(df[column])
 
         else:
-            st.warning("O texto inserido não está na coluna selecionada.")
+            st.warning("The search string is not present in the selected column.")
         
 
-#ALTERANDO TIPOS DE DADOS PELA COLUNA
+#Change columns datatypes 
 import streamlit as st
 import pandas as pd
 
 def change_column_data_types(df):
-    st.write("### ALTERANDO OS TIPOS DE DADOS PELA COLUNA")
+    st.write("### Change Column Data Types")
     
-    # SELECIONE AS COLUNAS PARA ALTERAÇÃO
+    # Select columns to change data types
     all_columns = df.columns.tolist()
     selected_columns = st.multiselect("Select columns to change data types", options=all_columns)
     
-    # RECEBENDO NOVOS TIPOS DE DADOS DO USUÁRIO
+    # Get the new data types from the user
     new_data_types = {}
     for column in selected_columns:
         st.write(f"Column: {column}")
@@ -154,10 +152,10 @@ def change_column_data_types(df):
         new_data_type = st.selectbox("Select new data type", options=['object', 'int', 'float', 'datetime', 'boolean'])
         new_data_types[column] = new_data_type
     
-    # CRIANDO UMA CÓPIA DO DATAFRAME
+    # Create a copy of the DataFrame to modify
     modified_df = df.copy()
     
-    # ALTERANDO OS TIPOS DE DADOS SELECIONADOS
+    # Change the data types of selected columns
     for column, data_type in new_data_types.items():
         try:
             if data_type == 'object':
@@ -171,40 +169,40 @@ def change_column_data_types(df):
             elif data_type == 'boolean':
                 modified_df[column] = modified_df[column].astype(bool)
             
-            st.write(f"Coluna '{column}' os tipos de dados foram alterados para '{data_type}' com êxito!")
+            st.write(f"Column '{column}' data type changed to '{data_type}' successfully!")
         except Exception as e:
-            st.error(f"Ocorreu um erro ao mudar o tipo de dados da coluna '{column}': {str(e)}")
+            st.error(f"Error occurred while changing data type of column '{column}': {str(e)}")
     
     return modified_df
 def groupby_aggregate_data(sub_df):
-    st.write("### AGRUPANDO E AGREGANDO DADOS: ")
+    st.write("### Grouping and Aggregating Data")
     st.write(sub_df.head())
     
-    # RECEBENDO A LISTA DAS COLUNAS DO DATAFRAME
+    # Get the list of columns from the DataFrame
     columns = sub_df.columns.tolist()
 
-    # RECEBENDO CATEGORIAS DAS COLUNAS PARA AGRUPAR
-    group_columns = st.multiselect("SELECIONE A CATEGORIA DAS COLUNAS PARA AGRUPAR", columns)
+    # Get the categorical columns for grouping
+    group_columns = st.multiselect("Select categorical columns for grouping", columns)
 
-    # RECEBENDO VALOR NUMERICOS PARA AGREGAÇÃO
-    numerical_columns = st.multiselect("SELECIONE A CATEGORIA DAS COLUNAS PARA AGRAGAÇÃO: ", columns)
+    # Get the numerical columns for aggregation
+    numerical_columns = st.multiselect("Select numerical columns for aggregation", columns)
 
-    # RECEBENDO AGREGAÇÕES DO USUÁRIO
+    # Get the aggregation functions from the user
     #aggregation_functions = st.multiselect("Select aggregation functions", ['sum', 'mean', 'median', 'min', 'max'])
     
-    # CRIANDO DICIONÁRIO DE AGREGAÇÃO
+    # Create the aggregation dictionary
     #aggregation = {col: func for col in numerical_columns for func in aggregation_functions}
 
-    # AGRUPANDO E AGREGANDO
+    # Perform grouping and aggregation
     if group_columns and numerical_columns:
         grouped_dff = sub_df.groupby(group_columns)[numerical_columns].agg(['sum', 'mean', 'median', 'min', 'max'])
-        grouped_df = grouped_dff.reset_index()  # RESETANDO O INDEX PARA EXIBIR OS VALORES
+        grouped_df = grouped_dff.reset_index()  # Reset index to display category names
        
-        st.write("### DADOS AGRUPADOS E AGREGADOS")
+        st.write("### Grouped and Aggregated Data")
         st.write(grouped_df)
         #fig = px.bar(grouped_df, x=grouped_df.index, y=['sum'], barmode='group')
     else:
-        st.warning("POR FAVOR SELECIONE AO MENOS UMA CATEGORIA DE UMA COLUNA, , and one aggregation function.")
+        st.warning("Please select at least one categorical column, one numerical column, and one aggregation function.")
   
        
 def analyze_data(data):
@@ -213,34 +211,34 @@ def analyze_data(data):
     col1,col2 = st.columns(2)
     
     with container:
-         st.write("CABEÇALHO: ",data.head())
+         st.write("File Header",data.head())
     with col1:
          st.write("Columns in you file are ",data.columns)
-    st.write("### SELECIONE AS COLUNAS PARA FAZER A ANÁLISE DE DADOS: ")
+    st.write("### Select Columns to make your Data Set for Analysis")
     
     with col2:
-        st.write("TIPO DE DADOS: " ,data.dtypes)
+        st.write("Data Types " ,data.dtypes)
 
         all_columns = [str(col) for col in data.columns]
         options_key = "_".join(all_columns)
-        selected_columns = st.multiselect("SELECIONE AS COLUNAS", options=all_columns)    
+        selected_columns = st.multiselect("Select columns", options=all_columns)    
     if selected_columns:
         sub_df = data[selected_columns]
         sub_df = select_and_rename_column(sub_df)
-        st.write("### DATAFRAME: ")
+        st.write("### Sub DataFrame")
         st.write(sub_df.head())
 
         remove_duplicates(sub_df)
         
         change_column_type_df = change_column_data_types(sub_df)
-        st.write("OS TIPOS FORA ALTERADOS",change_column_type_df)
-        st.write("DESCRIÇÃO")
+        st.write("Columns Types are changed",change_column_type_df)
+        st.write("Description")
         st.write(change_column_type_df.describe().T)
-        st.write("RANKING")
+        st.write("Data Rank")
         st.write(change_column_type_df.rank())
 
-        st.subheader("ORDENAR DADOS: ")
-        sort_column = st.selectbox("SELECIONE UMA COLUNA PARA ORDENAR: ", change_column_type_df.columns)
+        st.subheader("Sort Data")
+        sort_column = st.selectbox("Select column for sorting", change_column_type_df.columns)
         sorted_df = change_column_type_df.sort_values(by=sort_column)
         st.write(sorted_df)
 
@@ -256,65 +254,79 @@ def analyze_data(data):
         show_data_correlation(change_column_type_df)
         filter_rows(change_column_type_df)
     
-        groupby_aggregate_data(sub_df)        
+        groupby_aggregate_data(sub_df)
+    
+        
 
         search_and_replace(sub_df)
 
+
+
     else:
-        st.warning("POR FAVOR SELECIONE PELO MENOS UMA COLUNA.")
+        st.warning("Please select at least one column.")
+
 
 def show_file_header(data):
-    st.write("CABEÇALHO: ")
+    st.write("File Header")
     st.write(data.head())
 
 def sort_data(data):
     # Sort the data by a selected column
-    sort_column = st.selectbox("SELECIONE UMA COLUNA PARA ORDENAR OS DADOS: ", data.columns)
+    sort_column = st.selectbox("Select column to sort by", data.columns)
     sorted_df = data.sort_values(by=sort_column)
     return sorted_df
 
+
 def show_sorted_data(sorted_df):
-    st.write("ORDENAR DADOS: ")
+    st.write("Sort Data")
     st.write(sorted_df)
+
 
 def show_missing_values(data):
     #col1 = st.beta_column()
-    st.write("DADOS FALTANTES: ")
+    st.write("Missing Values")
     st.write(data.isnull().sum())
 
 def show_percent_missing(data):
-    st.write("PORCENTAGEM FALTANTE: ")
+    st.write("Missing Percentage")
     st.write(data.isna().mean().mul(100))
+
+
 
 def show_unique_values(data):
     #col2 = st.beta_column()
-    st.write("VALORES ÚNICOS: ")
+    st.write("Unique Values")
     st.write(data.nunique())
+
 
 def show_standard_deviation(data):
     #col1 = st.beta_column()
-    st.write("DESVIO PADRÃO: ")
+    st.write("Standard Deviation")
     st.write(data.std(numeric_only=True))
+
 
 def show_data_shape(data):
     #col1, col2 = st.beta_columns(2)
-    st.write("NÚMERO DE LINHAS: ")
+    st.write("Number of rows")
     st.write(data.shape[0])
-    st.write("NÚMERO DE COLUNAS: ")
+    st.write("Number of columns")
     st.write(data.shape[1])
+
 
 def show_data_correlation(data):
     #col1 = st.beta_column()
-    st.write("CORRELAÇÃO DE DADOS: ")
+    st.write("Data Correlation")
     st.write(data.corr(numeric_only=True))
 
 def corr(data):
-    st.write("CORRELAÇÃO DOS DADOS")
+    st.write("Data correlation")
     st.write(data.corr(numeric_only=True).style.background_gradient(cmap='RdBu', vmin=-1, vmax=1))  
 
-def filter_rows(data):    
-    column_name = st.selectbox("SELECIONE UMA COLUNA PARA FILTRAR: ", data.columns)
-    value = st.text_input("INSIRA O FILTRO: ")
+
+def filter_rows(data):
+    
+    column_name = st.selectbox("Select a column to filter", data.columns)
+    value = st.text_input("Enter the filter value")
     # Filter the rows based on the converted column
     if value == "":
         filtered_data = data[data[column_name].isnull()]
@@ -322,15 +334,18 @@ def filter_rows(data):
           filtered_data = data[data[column_name] >= float(value)]
     else:      
         filtered_data = data[data[column_name].astype(str).str.contains(value, case=False)]
-    st.write("DADOS FILTRADOS")
+    st.write("Filtered Data")
     st.write(filtered_data)    
 
+
 def create_chart(chart_type, data, x_column, y_column):
-    container.write(" # VISUALIZAÇÃO DE DADOS # ")
+
+    container.write(" # Data Visualization # ")
     if chart_type == "Bar":
-        st.header("GRÁFICO DE BARRAS")
+    
+        st.header("Bar Chart")
         
-        color_column = st.sidebar.selectbox("SELECIONE A COLUNA POR COR: ", data.columns,key="color_name")
+        color_column = st.sidebar.selectbox("Select column for color ", data.columns,key="color_name")
         #pattern_column = st.sidebar.selectbox("Select column for pattern ", data.columns)
         if color_column:
            fig = px.bar(data, x=x_column, y=y_column,color=color_column,barmode="group")
@@ -340,15 +355,16 @@ def create_chart(chart_type, data, x_column, y_column):
            st.plotly_chart(fig)   
 
     elif chart_type == "Line":
-        st.header("GRÁFICA DE LINHA")
+        st.header("Line Chart")
         fig = px.line(data, x=x_column, y=y_column)
         st.plotly_chart(fig)
 
     elif chart_type == "Scatter":
-        st.header("GRÁFICO DE DISPERSÃO")
-        size_column = st.sidebar.selectbox("SELECIONE A COLUNA POR TAMANHO: ", data.columns)
-        color_column = st.sidebar.selectbox("SELECIONE A COLUNA POR COR:  ", data.columns)
+        st.header("Scatter Chart")
+        size_column = st.sidebar.selectbox("Select column for size ", data.columns)
+        color_column = st.sidebar.selectbox("Select column for color ", data.columns)
         if color_column:
+            
            fig = px.scatter(data, x=x_column, y=y_column,color=color_column,size=size_column)
 
         else:
@@ -356,15 +372,16 @@ def create_chart(chart_type, data, x_column, y_column):
         st.plotly_chart(fig)        
 
     elif chart_type == "Histogram":
-        st.header("GRÁFICO HISTOGRAMA")
-        color_column = st.sidebar.selectbox("SELECIONE A COLUNA POR COR: ", data.columns)
+        st.header("Histogram Chart")
+        color_column = st.sidebar.selectbox("Select column for color ", data.columns)
         fig = px.histogram(data, x=x_column, y=y_column,color = color_column)
         st.plotly_chart(fig)
         
-    elif chart_type == "Pie":
-        st.header("GRÁFICO PIZZA")
 
-        color_column = st.sidebar.selectbox("SELECIONE A COLUNA POR COR: ", data.columns)
+    elif chart_type == "Pie":
+        st.header("Pie Chart")
+
+        color_column = st.sidebar.selectbox("Select column for color ", data.columns)
         if color_column:
             fig = px.pie(data, names=x_column, values=y_column, color=color_column)
             st.plotly_chart(fig)
@@ -372,26 +389,23 @@ def create_chart(chart_type, data, x_column, y_column):
             fig = px.pie(data, names=x_column, values=y_column)
             st.plotly_chart(fig)
     
+    
+
 def main():
+
     
-    # SUBINDO IMAGEM
-    image = Image.open("logo-amazon.png")
+    image = Image.open("pandasFuny.jpg")
     container.image(image, width=200)
-    container.write(" # Análise de Dados & Visualização # ")
+    container.write(" # Data Analysis and Visualization # ")
     
-    # CAMPO DE UPLOAD DA BASE DE DADOS
     st.sidebar.image(image, width=50)
-    file_option = st.sidebar.radio("FONTE DE DADOS", options=["Upload Local File", "Enter Online Dataset"])
+    file_option = st.sidebar.radio("Data Source", options=["Upload Local File", "Enter Online Dataset"])
     file = None
     data = None
-    
-    # CONDIÇÕES DE UPLOAD DO ARQUIVO SENDO ELE LOCAL OU ONLINE
-    
-    #LOCAL
+
     if file_option == "Upload Local File":
-        file = st.sidebar.file_uploader("Faça upload de um arvivo Excel ou CSV: ", type=["csv", "excel"])
-        
-    #ONLINE    
+        file = st.sidebar.file_uploader("Upload a data set in CSV or EXCEL format", type=["csv", "excel"])
+
     elif file_option == "Enter Online Dataset":
         online_dataset = st.sidebar.text_input("Enter the URL of the online dataset")
         if online_dataset:
@@ -403,11 +417,9 @@ def main():
                     st.warning("Unable to fetch the dataset from the provided link.")
             except:
                 st.warning("Invalid URL or unable to read the dataset from the provided link.")
-                
-    # OPÇÕES EM RADIO BUTTON            
+
     options = st.sidebar.radio('Pages', options=['Data Analysis', 'Data visualization'])
-    
-    #VERIFICANDO A EXISTÊNCIA DO ARQUIVO E DAS OPÇÕES QUANDO SELECIONADAS
+
     if file is not None:
         data = load_data(file)
 
@@ -419,25 +431,28 @@ def main():
 
     elif options == 'Data visualization':
         if data is not None:
-            
-            # CRIAÇÃO DE UM SIDEBAR PARA OPÇÕES DO USUÁRIO
+            # Create a sidebar for user options
             st.sidebar.title("Chart Options")
 
-            st.write("### SELECIONE AS COLUNAS:")
+
+            st.write("### Select Columns")
             all_columns = data.columns.tolist()
             options_key = "_".join(all_columns)
-            selected_columns = st.sidebar.multiselect("SELECIONE AS COLUNAS", options=all_columns)
+            selected_columns = st.sidebar.multiselect("Select columns", options=all_columns)
             if selected_columns:
                 sub_df = data[selected_columns]
 
-                chart_type = st.sidebar.selectbox("SELECIONE O TIPO DE GRÁFICO", ["Bar", "Line", "Scatter", "Histogram", "Pie"])
 
-                x_column = st.sidebar.selectbox("COLUNA X", sub_df.columns)
+                chart_type = st.sidebar.selectbox("Select a chart type", ["Bar", "Line", "Scatter", "Histogram", "Pie"])
 
-                y_column = st.sidebar.selectbox("COLUNA Y", sub_df.columns)
+                x_column = st.sidebar.selectbox("Select the X column", sub_df.columns)
+
+                y_column = st.sidebar.selectbox("Select the Y column", sub_df.columns)
 
                 create_chart(chart_type, sub_df, x_column, y_column)
 
-# INICIANDO O APP
+    
+       
+
 if __name__ == "__main__":
     main()
