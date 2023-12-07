@@ -1,6 +1,6 @@
-# Dashboard de Análise de dados em CSV  e EXCEL  - Erik Marta Garcia
+# Painel de Análise de dados em CSV  e EXCEL  - Erik Marta Garcia
 
-Criação de um dashboard para analisar banco de dados em CSV ou Excel, proporcionando uma experiência única para usuários em inglês e português. Com dois aplicativos (app.py e app.py - English Version) em Python usando Streamlit, foi utilizado POO (ProgramçãoOrientada a Objetos) e com isso criei algumas funções:
+Criação de um painel para analisar banco de dados em CSV ou Excel, proporcionando uma experiência única para usuários em inglês e português. Com dois aplicativos (app.py e app.py - English Version) em Python usando Streamlit, foi utilizado POO (ProgramçãoOrientada a Objetos) e com isso criei algumas funções:
 - Função de tratamento de dados
 - Análise exploratória
 - Visualização de dados
